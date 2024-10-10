@@ -3,13 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 
-# Initialize session state attributes if they don't exist
+# Initialize session state for navigation and user authentication
+if 'page' not in st.session_state:
+    st.session_state.page = "Home"
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'current_user' not in st.session_state:
     st.session_state.current_user = None
 if 'users' not in st.session_state:
-    st.session_state.users = {}  # Placeholder for user data
+    st.session_state.users = {}
 if 'meals' not in st.session_state:
     st.session_state.meals = []
 if 'total_calories_consumed' not in st.session_state:
@@ -17,9 +19,23 @@ if 'total_calories_consumed' not in st.session_state:
 if 'fitness_data' not in st.session_state:
     st.session_state.fitness_data = pd.DataFrame(columns=['Date', 'Steps', 'Calories from Steps', 'Calories from Activity', 'Total Calories Burned', 'Total Calories Consumed', 'Calories Balance'])
 
-# Function for home page
+# Function to handle login
+def login():
+    st.title("Login Page")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        # Here you would validate the user credentials
+        if username == "admin" and password == "password":  # Example login validation
+            st.session_state.logged_in = True
+            st.session_state.current_user = username
+            st.success("Successfully logged in!")
+            st.session_state.page = "Home"
+        else:
+            st.error("Invalid username or password.")
+
+# Home page function
 def home_page():
-    # Check if the user is logged in
     if not st.session_state.logged_in:
         st.error("You need to be logged in to access this page.")
         return
@@ -31,10 +47,9 @@ def home_page():
     # Title of the app
     st.title('Health and Fitness Tracker')
 
-    # Sidebar inputs for the user's data
+    # Sidebar inputs for user's fitness data
     st.sidebar.header('Input Your Daily Fitness Data')
 
-    # Input fields for the user
     steps = st.sidebar.number_input('Enter your steps for today', min_value=0)
     weight = st.sidebar.number_input('Enter your weight (kg)', min_value=0.0, step=0.1)
     activity = st.sidebar.selectbox("Choose a physical activity", ["None", "Walking", "Running", "Cycling", "Swimming"])
@@ -45,7 +60,7 @@ def home_page():
 
     # Function to calculate calories burned from steps
     def calculate_calories_from_steps(steps, weight):
-        calories_per_step = weight / 20  # Rough estimate: 1 calorie burned per 20 steps per kg
+        calories_per_step = weight / 20  # Rough estimate
         return steps * calories_per_step
 
     # Function to calculate calories burned from activity
@@ -65,14 +80,11 @@ def home_page():
     calories_from_activity = calculate_calories_from_activity(activity, weight, activity_duration)
     total_calories_burned = calories_burned_from_steps + calories_from_activity
 
-    # Section for calories consumed by user-defined meals
+    # Section for calories consumed by meals
     st.sidebar.header('Calories Consumed by Meals')
-
-    # Input fields for the meal name and calories
     meal_name = st.sidebar.text_input('Meal Name')
     meal_calories = st.sidebar.number_input('Calories for this meal', min_value=0)
 
-    # Button to add the meal
     if st.sidebar.button('Add Meal'):
         if meal_name and meal_calories > 0:
             st.session_state.meals.append({'meal': meal_name, 'calories': meal_calories})
@@ -88,10 +100,8 @@ def home_page():
             st.sidebar.write(f"{meal['meal']}: {meal['calories']} calories")
         st.sidebar.write(f"Total Calories Consumed: {st.session_state.total_calories_consumed}")
 
-    # Calories balance (consumed vs burned)
+    # Calories balance
     calories_balance = st.session_state.total_calories_consumed - total_calories_burned
-
-    # Display calories balance
     st.subheader('Calories Balance')
     if calories_balance > 0:
         st.write(f"Surplus! You have consumed {calories_balance} more calories than you burned today.")
@@ -100,9 +110,8 @@ def home_page():
     else:
         st.write("You have perfectly balanced your calories today.")
 
-    # Store the inputs in a DataFrame
+    # Data storage and visualization
     if st.sidebar.button('Add Data'):
-        # Create a new row with the input data
         new_data = pd.DataFrame({
             'Date': [date],
             'Steps': [steps],
@@ -111,56 +120,47 @@ def home_page():
             'Total Calories Burned': [total_calories_burned],
             'Total Calories Consumed': [st.session_state.total_calories_consumed],
             'Calories Balance': [calories_balance],
-            'Water': [st.sidebar.number_input('Enter water intake (liters)', min_value=0.0, step=0.1)]
         })
-
-        # Concatenate the new data with the existing DataFrame
         st.session_state.fitness_data = pd.concat([st.session_state.fitness_data, new_data], ignore_index=True)
         st.success('Data added successfully!')
 
-    # Display the stored fitness data
     st.subheader('Your Fitness Data')
     st.write(st.session_state.fitness_data)
 
-    # Visualize progress
-    if not st.session_state.fitness_data.empty:
-        st.subheader('Fitness Progress Over Time')
+# Settings page function
+def settings_page():
+    st.title("Settings Page")
+    st.write("This is where you can update your app preferences.")
 
-        fig, ax = plt.subplots(4, 1, figsize=(10, 10))
+# Logout function
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.current_user = None
+    st.session_state.page = "login"
+    st.success("You have been logged out.")
 
-        # Plot steps
-        ax[0].plot(st.session_state.fitness_data['Date'], st.session_state.fitness_data['Steps'], label='Steps', color='blue')
-        ax[0].set_title('Steps')
-        ax[0].set_xlabel('Date')
-        ax[0].set_ylabel('Steps')
-        
-        # Plot calories from steps
-        ax[1].plot(st.session_state.fitness_data['Date'], st.session_state.fitness_data['Calories from Steps'], label='Calories from Steps', color='green')
-        ax[1].set_title('Calories Burned from Steps')
-        ax[1].set_xlabel('Date')
-        ax[1].set_ylabel('Calories')
-        
-        # Plot calories from activity
-        ax[2].plot(st.session_state.fitness_data['Date'], st.session_state.fitness_data['Calories from Activity'], label='Calories from Activity', color='orange')
-        ax[2].set_title('Calories Burned from Activity')
-        ax[2].set_xlabel('Date')
-        ax[2].set_ylabel('Calories')
+# Navigation bar
+def navigation():
+    if not st.session_state.logged_in:
+        login()
+    else:
+        st.sidebar.title("Navigation")
+        selected_page = st.sidebar.radio("Go to", ["Home", "Settings", "Logout"])
+        if selected_page == "Home":
+            st.session_state.page = "Home"
+        elif selected_page == "Settings":
+            st.session_state.page = "Settings"
+        elif selected_page == "Logout":
+            logout()
 
-        # Plot total calories burned
-        ax[3].plot(st.session_state.fitness_data['Date'], st.session_state.fitness_data['Total Calories Burned'], label='Total Calories Burned', color='purple')
-        ax[3].set_title('Total Calories Burned')
-        ax[3].set_xlabel('Date')
-        ax[3].set_ylabel('Calories')
+# Main page display
+def main():
+    navigation()  # Call the navigation bar
 
-        plt.tight_layout()
-        st.pyplot(fig)
+    if st.session_state.page == "Home":
+        home_page()
+    elif st.session_state.page == "Settings":
+        settings_page()
 
-    # Logout button at the top right
-    if st.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.current_user = None
-        st.session_state.page = "login"  # Redirect to login after logout
-
-# Call the home_page function to run the app
 if __name__ == "__main__":
-    home_page()
+    main()
