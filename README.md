@@ -6,7 +6,6 @@ A simple yet powerful web application to help users track their daily fitness da
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Screenshots](#screenshots)
 - [Technologies Used](#technologies-used)
 - [Contributing](#contributing)
 
@@ -72,20 +71,6 @@ To run this project locally, follow these steps:
 ### 3. **Navigation**
    - Use the sidebar to navigate between different sections like Home, Settings, and Logout.
 
-## Screenshots
-Here are some screenshots of the application (Add your screenshots here):
-
-1. **Login Page**  
-   ![Login Page](./screenshots/login.png)
-
-2. **Home Page**  
-   ![Home Page](./screenshots/home.png)
-
-3. **Calories Tracking**  
-   ![Calories Tracking](./screenshots/calories.png)
-
-4. **Fitness Data Table**  
-   ![Fitness Data Table](./screenshots/fitness_data.png)
 
 ## Technologies Used
 - **Streamlit**: The main framework used for building the web app.
